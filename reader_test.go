@@ -28,15 +28,17 @@ func calcHash(r io.ReadSeeker, t *testing.T) string {
 }
 
 func TestBasicReader(t *testing.T) {
-	f, err := os.Open("testdata/divina.txt.gz")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer f.Close()
+	for _, fn := range []string{"testdata/divina.txt.gz", "testdata/divina2.txt.gz"} {
+		f, err := os.Open(fn)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer f.Close()
 
-	sum := calcHash(f, t)
-	if sum != "810d873f4a55619450f6e2550b8ca0f6c2bd0baf" {
-		t.Error("invalid hash for decompressed stream")
+		sum := calcHash(f, t)
+		if sum != "810d873f4a55619450f6e2550b8ca0f6c2bd0baf" {
+			t.Error("invalid hash for decompressed stream")
+		}
 	}
 }
 
