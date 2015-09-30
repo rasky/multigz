@@ -1,5 +1,3 @@
-package multigz
-
 // Multigz - a pure-Go package implementing efficient seeking within gzip files
 //
 // Abstract
@@ -77,3 +75,4 @@ package multigz
 // a valid gzip file, compatible with all existing gzip libraries and tools,
 // but it can be efficiently seeked by knowing in advance where each internal
 // gzip file begins.
+package multigz
