@@ -40,7 +40,7 @@ func (cw *countReader) ReadByte() (ch byte, err error) {
 // through the file and record the positions of interest by calling Offset().
 // Then, you can seek to a specific offset by calling Seek().
 type Reader struct {
-	*gzip.Reader
+	gz    *gzip.Reader
 	ur    io.Reader
 	r     io.ReadSeeker
 	cnt   int64
@@ -56,7 +56,7 @@ func NewReader(r io.ReadSeeker) (*Reader, error) {
 		return nil, err
 	}
 	gz.Multistream(false)
-	or.Reader = gz
+	or.gz = gz
 	return or, nil
 }
 
@@ -69,22 +69,22 @@ func (or *Reader) createUnderlyingReader() io.Reader {
 }
 
 func (or *Reader) Read(data []byte) (int, error) {
-	if or.Reader == nil {
+	if or.gz == nil {
 		return 0, io.EOF
 	}
 	nread := 0
 	for len(data) > 0 {
-		n, err := or.Reader.Read(data)
+		n, err := or.gz.Read(data)
 		if err == io.EOF {
 			or.noff = 0
 			or.block = or.cnt
 
-			or.Reader.Close()
-			if or.Reader.Reset(or.ur) == io.EOF {
-				or.Reader = nil
+			or.gz.Close()
+			if or.gz.Reset(or.ur) == io.EOF {
+				or.gz = nil
 				return nread, nil
 			}
-			or.Reader.Multistream(false)
+			or.gz.Multistream(false)
 			continue
 		}
 		if err != nil {
@@ -98,11 +98,11 @@ func (or *Reader) Read(data []byte) (int, error) {
 }
 
 func (or *Reader) Close() error {
-	if or.Reader == nil {
+	if or.gz == nil {
 		return nil
 	}
-	r := or.Reader
-	or.Reader = nil
+	r := or.gz
+	or.gz = nil
 	return r.Close()
 }
 
@@ -114,21 +114,21 @@ func (or *Reader) Seek(o Offset) error {
 	or.r.Seek(o.Block, 0)
 	or.cnt = o.Block
 
-	if or.Reader == nil {
+	if or.gz == nil {
 		gz, err := gzip.NewReader(or.createUnderlyingReader())
 		if err != nil {
 			return err
 		}
-		or.Reader = gz
+		or.gz = gz
 	} else {
-		or.Reader.Close()
-		if or.Reader.Reset(or.createUnderlyingReader()) == io.EOF {
-			or.Reader = nil
+		or.gz.Close()
+		if or.gz.Reset(or.createUnderlyingReader()) == io.EOF {
+			or.gz = nil
 			return errWrongOffset
 		}
 	}
 
-	or.Reader.Multistream(false)
+	or.gz.Multistream(false)
 	or.block = o.Block
 	or.noff = 0
 
