@@ -41,6 +41,21 @@ package multigz
 //     to disk so skip the initial indexing phase for the same file.
 //
 //
+// Command line tool
+//
+// This package contains a command line tool called "multigz", which can be
+// installed with the following command:
+//
+//      $ go get github.com/rasky/multigz/cmd/multigz
+//
+// The tool is mostly compatible with "gzip", supporting all its main options.
+// It can be used in automatic scripts to generate multi-gzip files instead of
+// gzip files. For instance, to create a .tar.gz archive where you can later
+// easily seek into, use:
+//
+//      $ tar c <directory> | multigz -c > archive.tar.gz
+//
+//
 // Description of multi-gzip
 //
 // Normally, it is impossible to seek at arbitrary offsets within a gzip stream,
