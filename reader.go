@@ -12,6 +12,11 @@ var (
 	errWrongOffset = errors.New("the offset does not appear to match the gzip layout")
 )
 
+// Offset represents a specific point in the decompressed stream where we want
+// to seek at. The normal way to obtain an Offset is to call Reader.Offset() of
+// Writer.Offset() at the specific point in the stream we are interested into;
+// later, it is possible to call Reder.Seek() passing the Offset to efficiently
+// get back to that point.
 type Offset struct {
 	Block int64
 	Off   int64

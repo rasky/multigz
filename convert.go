@@ -17,7 +17,8 @@ var (
 	errInvalidConvertMode = errors.New("invalid convert mode specified")
 )
 
-// Convert a gzip file into a multigz file
+// Convert a whole gzip file into a multi-gzip file. mode can be used to
+// select between using a normal writer, or the rsync-friendly writer.
 func Convert(w io.Writer, r io.ReadSeeker, mode ConvertMode) error {
 
 	// We want to match the same algorithm originally used, to preserve
