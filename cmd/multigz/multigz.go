@@ -45,6 +45,7 @@ const (
 	ModeCompress = iota
 	ModeDecompress
 	ModeTest
+	ModeTestMulti
 )
 
 var Mode = ModeCompress
@@ -99,6 +100,9 @@ func main() {
 	}
 	if *flagTest {
 		Mode = ModeTest
+	}
+	if *flagTestMultigz {
+		Mode = ModeTestMulti
 	}
 	if strings.Contains(binname, "zcat") {
 		Mode = ModeDecompress
@@ -178,7 +182,7 @@ func compressFile(fn string) bool {
 			}
 			outfn = fn[:len(fn)-len(ext)]
 			force = *flagForce
-		case ModeTest:
+		case ModeTest, ModeTestMulti:
 			outfn = "/dev/null"
 			force = true
 		}
@@ -226,6 +230,9 @@ func compressFile(fn string) bool {
 	case ModeDecompress, ModeTest:
 		zf, err = gzip.NewReader(f)
 		zw = w
+	case ModeTestMulti:
+		zf, err = multigz.NewReader(f)
+		zw = w
 	}
 	if err != nil {
 		fatal(err)
@@ -241,10 +248,15 @@ func compressFile(fn string) bool {
 
 	zw.Close()
 	OutFn = ""
-	if Mode != ModeTest {
+	switch Mode {
+	case ModeCompress, ModeDecompress:
 		CopyStat(w, f)
 		if !*flagKeep {
 			os.Remove(fn)
+		}
+	case ModeTestMulti:
+		if !zf.(*multigz.Reader).IsProbablyMultiGzip() {
+			fatal(fn, "is not a multi-gzip")
 		}
 	}
 	return true
@@ -275,6 +287,7 @@ Mandatory arguments to long options are mandatory for short options too.
   -k, --keep        keep (don't delete) input files
   -L, --license     display software license
   -t, --test        test compressed file integrity
+  -T, --testmulti   like -t, but also verifies that it is a multi-gzip
   -v, --verbose     verbose mode
   -V, --version     display version number
   -1, --fast        compress faster
