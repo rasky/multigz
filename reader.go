@@ -146,6 +146,12 @@ func (or *Reader) Seek(o Offset) error {
 	return nil
 }
 
+// Return true if we found at least a multi-gzip separtor while reading this
+// file.
+// This function does not take into account the fact that short files can
+// be effectively treated as multigz even if technically they aren't. Unless
+// you know that you've read enough bytes out of this file, you should use
+// the global function IsProbablyMultiGzip() which is a more general solution.
 func (or *Reader) IsProbablyMultiGzip() bool {
-	return or.delim || or.block+or.cnt < DefaultPeekSize
+	return or.delim
 }

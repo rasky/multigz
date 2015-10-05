@@ -1,8 +1,6 @@
 package multigz
 
 import (
-	"bufio"
-	"compress/gzip"
 	"io"
 	"io/ioutil"
 )
@@ -20,24 +18,23 @@ const DefaultPeekSize = DefaultBlockSize * 2
 // end of it; but the use-case we're aiming at is getting performance at
 // seeking, and thus we prefer to consider files with large blocks as not proper
 // multi-gzips.
-func IsProbablyMultiGzip(r io.Reader, peeksize int64) bool {
+func IsProbablyMultiGzip(r io.ReadSeeker, peeksize int64) bool {
 
 	// gzip multistream requires buffered I/O to stop exactly at the stream
 	// boundary.
-	buf := bufio.NewReader(r)
-	gz, err := gzip.NewReader(buf)
+	gz, err := NewReader(r)
 	if err != nil {
 		return false
 	}
-	gz.Multistream(false)
+	defer gz.Close()
 
 	n, err := io.CopyN(ioutil.Discard, gz, peeksize)
-	if err != io.EOF || n == peeksize {
+	if err != nil {
 		return false
 	}
+	if n < peeksize {
+		return true
+	}
 
-	// We got a short read, so this should be a multigz. Try to see if
-	// there is a gzip header following this point, by resetting the
-	// gzip stream
-	return gz.Reset(buf) == nil
+	return gz.IsProbablyMultiGzip()
 }
