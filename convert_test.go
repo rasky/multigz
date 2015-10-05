@@ -34,7 +34,7 @@ func TestConvert(t *testing.T) {
 		}
 		defer f2.Close()
 
-		sum := calcHash(f2, t)
+		sum := calcHash(f2, true, t)
 		if sum != "810d873f4a55619450f6e2550b8ca0f6c2bd0baf" {
 			t.Error("invalid hash for decompressed stream")
 		}

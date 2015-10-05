@@ -39,7 +39,7 @@ func (cw *countReader) ReadByte() (ch byte, err error) {
 }
 
 // A multigz.Reader is 100% equivalent to a gzip.Reader, but allows to seek
-// within the compressed file to specitifc positions.
+// within the compressed file to specific positions.
 //
 // The idea is to use a multi-pass approach; in the first pass, you can go
 // through the file and record the positions of interest by calling Offset().
@@ -51,6 +51,7 @@ type Reader struct {
 	cnt   int64
 	noff  int64
 	block int64
+	delim bool
 }
 
 func NewReader(r io.ReadSeeker) (*Reader, error) {
@@ -83,12 +84,12 @@ func (or *Reader) Read(data []byte) (int, error) {
 		if err == io.EOF {
 			or.noff = 0
 			or.block = or.cnt
-
 			or.gz.Close()
 			if or.gz.Reset(or.ur) == io.EOF {
 				or.gz = nil
 				return nread, nil
 			}
+			or.delim = true
 			or.gz.Multistream(false)
 			continue
 		}
@@ -143,4 +144,8 @@ func (or *Reader) Seek(o Offset) error {
 	}
 
 	return nil
+}
+
+func (or *Reader) IsProbablyMultiGzip() bool {
+	return or.delim || or.block+or.cnt < DefaultPeekSize
 }

@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-func calcHash(r io.ReadSeeker, t *testing.T) string {
+func calcHash(r io.ReadSeeker, multigz bool, t *testing.T) string {
 	gz, err := NewReader(r)
 	if err != nil {
 		t.Fatal(err)
@@ -22,20 +22,23 @@ func calcHash(r io.ReadSeeker, t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if gz.IsProbablyMultiGzip() != multigz {
+		t.Error("multigz status:", multigz, gz.IsProbablyMultiGzip())
+	}
 	gz.Close()
 	sum := hash.Sum([]byte{})
 	return hex.EncodeToString(sum)
 }
 
 func TestBasicReader(t *testing.T) {
-	for _, fn := range []string{"testdata/divina.txt.gz", "testdata/divina2.txt.gz"} {
+	for idx, fn := range []string{"testdata/divina.txt.gz", "testdata/divina2.txt.gz"} {
 		f, err := os.Open(fn)
 		if err != nil {
 			t.Fatal(err)
 		}
 		defer f.Close()
 
-		sum := calcHash(f, t)
+		sum := calcHash(f, idx == 1, t)
 		if sum != "810d873f4a55619450f6e2550b8ca0f6c2bd0baf" {
 			t.Error("invalid hash for decompressed stream")
 		}
@@ -76,6 +79,10 @@ func TestIndex(t *testing.T) {
 		sum := hash.Sum([]byte{})
 
 		pos = append(pos, offsets{Off: off, Sum: hex.EncodeToString(sum)})
+	}
+
+	if !gz.IsProbablyMultiGzip() {
+		t.Error("file is not detected as multigzip")
 	}
 
 	perm := rand.Perm(len(pos))
