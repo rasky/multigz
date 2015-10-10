@@ -117,6 +117,15 @@ func (or *Reader) Offset() Offset {
 }
 
 func (or *Reader) Seek(o Offset) error {
+	cur := or.Offset()
+	if cur.Block == o.Block && cur.Off < o.Off {
+		_, err := io.CopyN(ioutil.Discard, or, o.Off-cur.Off)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	or.r.Seek(o.Block, 0)
 	or.cnt = o.Block
 
