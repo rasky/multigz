@@ -1,6 +1,7 @@
 package multigz
 
 import (
+	"bytes"
 	"compress/gzip"
 	"errors"
 	"io"
@@ -19,14 +20,14 @@ var (
 
 // Convert a whole gzip file into a multi-gzip file. mode can be used to
 // select between using a normal writer, or the rsync-friendly writer.
-func Convert(w io.Writer, r io.ReadSeeker, mode ConvertMode) error {
+func Convert(w io.Writer, r io.Reader, mode ConvertMode) error {
 
 	// We want to match the same algorithm originally used, to preserve
 	// the rsyncable effect. The gzip library doesn't expose this data in the
 	// headers, so we parse it. We don't do additional checks here, as if the
 	// header is broken, gzip.NewReader will error out just afterwards.
 	var gzhead [10]byte
-	if _, err := r.Read(gzhead[:]); err != nil {
+	if _, err := io.ReadFull(r, gzhead[:]); err != nil {
 		return err
 	}
 	comprlevel := gzip.DefaultCompression
@@ -35,13 +36,6 @@ func Convert(w io.Writer, r io.ReadSeeker, mode ConvertMode) error {
 	} else if gzhead[8] == 0x4 {
 		comprlevel = gzip.BestSpeed
 	}
-	r.Seek(0, 0)
-
-	fz, err := gzip.NewReader(r)
-	if err != nil {
-		return nil
-	}
-	defer fz.Close()
 
 	var oz io.WriteCloser
 	switch mode {
@@ -53,6 +47,13 @@ func Convert(w io.Writer, r io.ReadSeeker, mode ConvertMode) error {
 		return errInvalidConvertMode
 	}
 	defer oz.Close()
+
+	fz, err := gzip.NewReader(io.MultiReader(bytes.NewReader(gzhead[:]), r))
+	if err != nil {
+		return nil
+	}
+	defer fz.Close()
+
 	if _, err = io.Copy(oz, fz); err != nil {
 		return err
 	}
