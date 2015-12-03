@@ -1,8 +1,9 @@
 package multigz
 
 import (
-	"compress/gzip"
 	"io"
+
+	gzip "github.com/klauspost/pgzip"
 )
 
 const cWINDOW_SIZE = 4096

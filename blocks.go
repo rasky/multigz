@@ -2,8 +2,9 @@ package multigz
 
 import (
 	"bufio"
-	"compress/gzip"
 	"io"
+
+	gzip "github.com/klauspost/pgzip"
 )
 
 const DefaultBlockSize = 64 * 1024

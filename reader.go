@@ -2,10 +2,11 @@ package multigz
 
 import (
 	"bufio"
-	"compress/gzip"
 	"errors"
 	"io"
 	"io/ioutil"
+
+	"github.com/klauspost/compress/gzip"
 )
 
 var (

@@ -2,9 +2,10 @@ package multigz
 
 import (
 	"bytes"
-	"compress/gzip"
 	"errors"
 	"io"
+
+	"github.com/klauspost/compress/gzip"
 )
 
 type ConvertMode int
